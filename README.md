@@ -71,8 +71,8 @@ for(i in 1:7) {
     "https://www.parlament.hu/web/guest/iromanyok-elozo-ciklusbeli-adatai?p_p_id=hu_parlament_cms_pair_",
     "portlet_PairProxy_INSTANCE_9xd2Wc9jP4z8&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&_hu_parlament_",
     "cms_pair_portlet_PairProxy_INSTANCE_9xd2Wc9jP4z8_pairAction=http%3A%2F%2Fwww.parlament.hu%2Finternet",
-    "%2Fcplsql%2Fogy_irom.irom_lekerd%3FP_TIP%3Dnull%26P_CKL%3D", (36:42)[i], "%26P_PARAM%3DI%26P_FOTIP%3Dnull",
-    "%26P_FOTIP%3DT%26P_ATIP%3Dz&p_auth=MVj7t9MD"))
+    "%2Fcplsql%2Fogy_irom.irom_lekerd%3FP_TIP%3Dnull%26P_CKL%3D", (36:42)[i],
+    "%26P_PARAM%3DI%26P_FOTIP%3Dnull", "%26P_FOTIP%3DT%26P_ATIP%3Dz&p_auth=MVj7t9MD"))
   linkek <- rvest::html_attr(rvest::html_elements(linkek, "a"), "href")
   linkek <- linkek[grep("www.parlament.hu:443", linkek)]
   
