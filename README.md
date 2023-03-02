@@ -265,5 +265,7 @@ fwrite(res2, "TorvenyAdatok.csv", dec = ",", sep = ";", bom = TRUE)
 
 ## Eredmények
 
-Az elkészült adatbázis innen letölthető, további, gépi úton történő
-feldolgozásra, elemzésre, vizualizációra alkalmas.
+Az elkészült adatbázis [innen
+letölthető](https://raw.githubusercontent.com/tamas-ferenci/TorvenyAdatok/main/TorvenyAdatok.csv),
+további, gépi úton történő feldolgozásra, elemzésre, vizualizációra
+alkalmas formátumban.
