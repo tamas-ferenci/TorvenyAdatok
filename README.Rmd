@@ -1,7 +1,7 @@
 ---
 title: "Magyar törvények adatai, 1998-"
 author:
-  - Ferenci Tamás (tamas.ferenci@medstat.hu)
+  - Ferenci Tamás (https://www.medstat.hu/)
 output:
   github_document:
     pandoc_args: ["--lua-filter=pandoc-quotes.lua"]
@@ -14,7 +14,9 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.width = 16/3*2, fig.height = 9/3*2, dpi = 300, dev = "ragg_png")
+knitr::opts_chunk$set(echo = TRUE, fig.width = 16/3*2,
+                      fig.height = 9/3*2, dpi = 300,
+                      dev = "ragg_png")
 library(data.table)
 ```
 
@@ -36,39 +38,36 @@ Ezzel a módszerrel az 1998-as parlamenti ciklus, és az azt követő ciklusok a
 
 Elsőként mind a 7, feldolgozható parlamenti ciklusra letöltjük az adatokat, és elmentjük az eredményt:
 
-```{r, eval = FALSE}
-res <- vector("list", 7)
-
-for(i in 1:7) {
-  print(i)
-  linkek <- rvest::read_html(paste0(
-    "https://www.parlament.hu/web/guest/iromanyok-elozo-ciklusbeli-adatai?p_p_id=hu_parlament_cms_pair_",
-    "portlet_PairProxy_INSTANCE_9xd2Wc9jP4z8&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&_hu_parlament_",
-    "cms_pair_portlet_PairProxy_INSTANCE_9xd2Wc9jP4z8_pairAction=http%3A%2F%2Fwww.parlament.hu%2Finternet",
-    "%2Fcplsql%2Fogy_irom.irom_lekerd%3FP_TIP%3Dnull%26P_CKL%3D", (36:42)[i],
-    "%26P_PARAM%3DI%26P_FOTIP%3Dnull", "%26P_FOTIP%3DT%26P_ATIP%3Dz&p_auth=MVj7t9MD"))
-  linkek <- rvest::html_attr(rvest::html_elements(linkek, "a"), "href")
-  linkek <- linkek[grep("www.parlament.hu:443", linkek)]
-  
-  linkektv <- do.call(c, sapply(linkek, function(l) {
-    temp <- rvest::html_attr(rvest::html_elements(rvest::read_html(l), "a"), "href")
-    temp <- temp[grep("ogy_irom.irom_adat", temp)]
-  }))
-  
-  res[[i]] <- rbindlist(lapply(1:length(linkektv), function(i) {
-    temp <- rvest::html_table(rvest::read_html(linkektv[i]))
-    if(length(temp)==0) data.table(Jelleg = NA) else setNames(data.table(t(temp[[2]][[2]])), temp[[2]][[1]])
-  }), fill = TRUE, idcol = "Szam")
+```{r}
+for(ciklus in 36:42) {
+  if(!file.exists(paste0("./adatok/ciklus", ciklus, ".rds"))) {
+    linkek <- rvest::read_html_live(paste0(
+      "https://www.parlament.hu/web/guest/iromanyok-elozo-ciklusbeli-adatai?p_p_id=hu_parlament_cms_pair_",
+      "portlet_PairProxy_INSTANCE_9xd2Wc9jP4z8&p_p_lifecycle=1&p_p_state=normal&p_p_mode=view&_hu_parlament_",
+      "cms_pair_portlet_PairProxy_INSTANCE_9xd2Wc9jP4z8_pairAction=http%3A%2F%2Fwww.parlament.hu%2Finternet",
+      "%2Fcplsql%2Fogy_irom.irom_lekerd%3FP_TIP%3Dnull%26P_CKL%3D", ciklus,
+      "%26P_PARAM%3DI%26P_FOTIP%3Dnull", "%26P_FOTIP%3DT%26P_ATIP%3Dz&p_auth=MVj7t9MD"))
+    linkek <- rvest::html_attr(rvest::html_elements(linkek, "a"), "href")
+    linkek <- linkek[grep("www.parlament.hu:443", linkek)]
+    
+    linkektv <- do.call(c, sapply(linkek, function(l) {
+      temp <- rvest::html_attr(rvest::html_elements(rvest::read_html_live(l), "a"), "href")
+      temp <- temp[grep("ogy_irom.irom_adat", temp)]
+    }))
+    
+    saveRDS(rbindlist(lapply(1:length(linkektv), function(i) {
+      temp <- rvest::html_table(rvest::read_html_live(linkektv[i]))
+      if(length(temp)==0) data.table(Jelleg = NA) else setNames(data.table(t(temp[[2]][[2]])), temp[[2]][[1]])
+    }), fill = TRUE, idcol = "Szam"), paste0("./adatok/ciklus", ciklus, ".rds"))
+  }
 }
-
-saveRDS(res, "res1.rds")
 ```
 
-```{r, echo = FALSE}
-res <- readRDS("res1.rds")
-```
+Azért érdemes ezt a megoldást választani, mert így, ha valamelyik lépésben hiba történik, akkor könnyebb újrakezdeni (persze elegánsabb lett volna egy `tryCatch` kivételkezelést használni). Ha sikerült, akkor töltsünk be mindent:
 
-Azért érdemes előallokálni a vektort, majd for-ciklussal feltölteni, mert így, ha valamelyik lépésben hiba történik, akkor könnyebb újrakezdeni (persze elegánsabb lett volna egy `tryCatch` kivételkezelést használni, és utána mehetett volna az egész egy `lapply`-ba).
+```{r}
+res <- lapply(36:42, function(ciklus) readRDS(paste0("./adatok/ciklus", ciklus, ".rds")))
+```
 
 Az érdemi résznél a letöltött táblázat hosszát azért kell ellenőrizni, mert néha, ha az oldal mérete nagyon nagy, akkor nem azonnal töltődik be, hanem előtte egy homokóra fut, de ezt az `rvest` nem tudja kezelni. Ha ezeket lementjük csupa `NA`-val kitöltve (a `fill = TRUE` miatt ez megvalósul), akkor később azonosíthatóak:
 
@@ -142,6 +141,17 @@ res[[7]] <- rbind(res[[7]][Szam!=87], setNames(data.table(
   "IJR-ParLexben feldolgozott iromány. A törvényjavaslat szövegét az előterjesztő kérésére 2022.06.07-én 16:55 órakor lecseréltük. Az előterjesztő tájékoztató levele és a törvényjavaslat lecserélt szövege az Irományhoz kapcsolódó háttéranyagok és egyéb dokumentumok között megtalálható. A Kormány kezdeményezésére a 2022. június 20-24-i rendkívüli ülés napirendjén. A Kormány kezdeményezésére a 2022. július 11-12-i rendkívüli ülés napirendjén. A Kormány kezdeményezésére a 2022. július 18-19-i rendkívüli ülés napirendjén.",
   "kormány (pénzügyminiszter)", "HTML", ""), names(res[[7]])))
 
+res[[7]] <- rbind(res[[7]][Szam!=278], setNames(data.table(
+  278, "költségvetési törvényjavaslat", "törvényjavaslat", "új", "2023.05.30.", "",
+  "",  "kihirdetve", "normál", "NemzetiségiUniós", "LV", "104", "2023.07.13.",
+  "IJR-ParLexben benyújtott iromány. A Kormány kezdeményezésére a 2023. július 3-4-7-i rendkívüli ülés napirendjén.",
+  "kormány (pénzügyminiszter)", "HTML", ""), names(res[[7]])))
+
+res[[7]] <- rbind(res[[7]][Szam!=413], setNames(data.table(
+  413, "költségvetési törvényjavaslat", "törvényjavaslat", "új", "2024.11.11.", "",
+  "",  "kihirdetve", "normál", "Nemzetiségi", "XC", "136", "2024.12.30.",
+  "IJR-ParLexben benyújtott iromány.A Kormány kezdeményezésére az Országgyűlés 2024. december 16-17-18-20-i rendkívüli ülésének napirendjén.",
+  "kormány (pénzügyminiszter)", "HTML", ""), names(res[[7]])))
 ```
 
 Ezt követően végrehajthatjuk az összefűzést:
@@ -153,8 +163,9 @@ res2 <- rbindlist(res, idcol = "Ciklus", fill = TRUE)
 Célszerű a ciklusoknak adni egy jól értelmezhető nevet is:
 
 ```{r}
-res2 <- merge(res2, data.table(Ciklus = 1:7, CiklusEv = c("1998-2002", "2002-2006", "2006-2010",
-                                                          "2010-2014", "2014-2018", "2018-2022", "2022-")))
+res2 <- merge(res2, data.table(Ciklus = 36:42,
+                               CiklusEv = c("1998-2002", "2002-2006", "2006-2010",
+                                            "2010-2014", "2014-2018", "2018-2022", "2022-")))
 ```
 
 Jelenleg minden változó szöveges, ezt transzformáljuk a valóságnak megfelelően, például a dátumokat alakítsuk dátummá:
@@ -173,6 +184,7 @@ res2$Delay <- as.numeric(difftime(res2$`Kihirdetés dátuma`, res2$Benyújtva, u
 Végezetül mentsük ki feldolgozható formátumban az adatokat:
 
 ```{r}
+saveRDS(res2, "TorvenyAdatok.rds")
 fwrite(res2, "TorvenyAdatok.csv", dec = ",", sep = ";", bom = TRUE)
 ```
 
