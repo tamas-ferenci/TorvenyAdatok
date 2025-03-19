@@ -263,7 +263,7 @@ res2 <- rbindlist(res, idcol = "Ciklus", fill = TRUE)
 Célszerű a ciklusoknak adni egy jól értelmezhető nevet is:
 
 ``` r
-res2 <- merge(res2, data.table(Ciklus = 36:42,
+res2 <- merge(res2, data.table(Ciklus = 1:7,
                                CiklusEv = c("1998-2002", "2002-2006", "2006-2010",
                                             "2010-2014", "2014-2018", "2018-2022", "2022-")))
 ```
